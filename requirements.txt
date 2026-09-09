@@ -1,0 +1,6 @@
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.27,<1.0
+google-cloud-translate>=3.15,<4.0
+python-multipart>=0.0.9,<1.0
+# Optional: required only by the "图片 OCR + 翻译" sample.
+google-cloud-vision>=3.7,<4.0

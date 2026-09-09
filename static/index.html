@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cloud Translation API v3 Lab</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div><p class="eyebrow">GOOGLE CLOUD · ADVANCED API</p><h1>Translation API v3 Lab</h1><p class="lede">从一次文本翻译，到术语表、异步批量任务、文档与自适应翻译的可运行演示。</p></div>
+    <div class="health" id="health">正在检查服务配置…</div>
+  </header>
+  <div class="notice"><strong>服务端凭据：</strong>浏览器不会接触 Google 凭据。请先在服务器设置 <code>GOOGLE_CLOUD_PROJECT</code> 和 ADC。<a href="/readme" target="_blank">查看 README</a></div>
+  <main>
+    <nav class="tabs" aria-label="功能导航">
+      <button class="tab active" data-panel="text">文本翻译</button><button class="tab" data-panel="languages">检测与语言</button><button class="tab" data-panel="glossary">术语表</button><button class="tab" data-panel="batch">批量与文档</button><button class="tab" data-panel="adaptive">自适应翻译</button><button class="tab" data-panel="extensions">扩展实验</button>
+    </nav>
+
+    <section id="text" class="panel active">
+      <div class="section-heading"><div><p class="eyebrow">SYNCHRONOUS</p><h2>TranslateText</h2></div><p>支持纯文本 / HTML、自动检测源语言、NMT、Translation LLM、Adaptive LLM、AutoML 自定义模型、术语表与标签。</p></div>
+      <form id="translate-form" class="grid-form">
+        <label class="wide">待翻译内容（每行作为一个 <code>contents</code> 项）<textarea name="contents" rows="7">Hello, Cloud Translation API!
+Our product name is Atlas.</textarea></label>
+        <label>源语言（留空自动检测）<input name="source_language_code" placeholder="en" /></label>
+        <label>目标语言<input name="target_language_code" value="zh-CN" required /></label>
+        <label>MIME 类型<select name="mime_type"><option value="text/plain">text/plain</option><option value="text/html">text/html</option></select></label>
+        <label>模型<select name="model"><option value="general/nmt">general/nmt · 低延迟</option><option value="general/translation-llm">general/translation-llm · 最高质量</option><option value="general/translation-llm-adaptive">general/translation-llm-adaptive · 参考数据</option><option value="default">服务默认</option></select></label>
+        <label>自定义模型 ID（覆盖上项）<input name="custom_model_id" placeholder="your-automl-model-id" /></label>
+        <label>术语表 ID（可选）<input name="glossary_id" placeholder="product-terms" /></label>
+        <label>位置（可选）<input name="location" placeholder="us-central1" /></label>
+        <label class="wide">标签（可选 JSON，用于结算归因）<input name="labels" value='{"demo":"v3-lab"}' /></label>
+        <div class="wide actions"><button>翻译</button><button type="button" class="secondary" id="html-sample">填入 HTML 样例</button></div>
+      </form>
+      <pre class="result" id="translate-result">结果将在这里显示。</pre>
+    </section>
+
+    <section id="languages" class="panel">
+      <div class="split"><div><div class="section-heading"><div><p class="eyebrow">DISCOVER</p><h2>DetectLanguage</h2></div></div>
+        <form id="detect-form"><label>输入文字<textarea name="content" rows="5">Bonjour tout le monde</textarea></label><label>MIME 类型<select name="mime_type"><option>text/plain</option><option>text/html</option></select></label><button>检测语言</button></form><pre class="result" id="detect-result">置信度与候选语言会显示在这里。</pre></div>
+        <div><div class="section-heading"><div><p class="eyebrow">CATALOG</p><h2>GetSupportedLanguages</h2></div></div>
+        <form id="languages-form"><label>显示语言<input name="display_language_code" value="zh-CN" /></label><label>模型<select name="model"><option value="general/nmt">general/nmt</option><option value="general/translation-llm">general/translation-llm</option></select></label><button>列出支持语言</button></form><pre class="result scroll" id="languages-result">按所选模型列出语言与方向支持情况。</pre></div></div>
+    </section>
+
+    <section id="glossary" class="panel">
+      <div class="section-heading"><div><p class="eyebrow">DOMAIN CONTROL</p><h2>Glossary</h2></div><p>术语表来自 Cloud Storage 的 CSV/TSV/TMX；创建和删除均为长时间运行任务。翻译时在「文本翻译」填入术语表 ID。</p></div>
+      <div class="split"><form id="glossary-form"><label>术语表 ID<input name="glossary_id" value="product-terms" required /></label><label>输入文件（GCS）<input name="input_uri" placeholder="gs://bucket/glossary.csv" required /></label><label>语言代码（逗号分隔）<input name="language_codes" value="en,zh-CN" required /></label><label>位置<input name="location" value="us-central1" /></label><button>创建术语表</button></form><div><div class="actions"><button id="list-glossaries" type="button">刷新术语表</button></div><pre class="result scroll" id="glossary-result">术语表清单将显示在这里。</pre><p class="small">停止词提示：单独的 <code>the</code>、<code>and</code> 等无效搜索字词会被 Glossary 忽略。</p></div></div><form id="stopword-form" class="inline-form"><label>停止词预检（逗号分隔）<input name="terms" value="Atlas,the,terms and conditions,and" /></label><button>检查通用停止词</button></form><pre class="result" id="stopword-result">这是本地预检；完整的语言专属列表以官方文档为准。</pre>
+    </section>
+
+    <section id="batch" class="panel">
+      <div class="section-heading"><div><p class="eyebrow">ASYNC + FILES</p><h2>批量文本与文档</h2></div><p>所有输入输出都在 Cloud Storage。批量文本最多 100 个文件、10 个目标语言；在线文档翻译直接返回二进制输出。</p></div>
+      <div class="triple"><form id="batch-text-form"><h3>BatchTranslateText</h3><label>输入 GCS URI<input name="input_uri" placeholder="gs://bucket/in.txt" required /></label><label>输出 GCS 前缀<input name="output_uri_prefix" placeholder="gs://bucket/out/" required /></label><label>源语言<input name="source_language_code" value="en" required /></label><label>目标语言（逗号）<input name="target_language_codes" value="zh-CN,ja" required /></label><label>MIME<select name="mime_type"><option>text/plain</option><option>text/html</option></select></label><button>提交文本任务</button><pre class="result" id="batch-text-result"></pre></form>
+      <form id="batch-document-form"><h3>BatchTranslateDocument</h3><label>输入 GCS URI / 通配符<input name="input_uri" placeholder="gs://bucket/input/*.docx" required /></label><label>输出 GCS 前缀<input name="output_uri_prefix" placeholder="gs://bucket/out/" required /></label><label>源语言（可空）<input name="source_language_code" placeholder="en" /></label><label>目标语言（逗号）<input name="target_language_codes" value="zh-CN" required /></label><button>提交文档任务</button><pre class="result" id="batch-document-result"></pre></form>
+      <form id="document-form"><h3>TranslateDocument（在线）</h3><label>文档<input name="file" type="file" accept=".doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx" required /></label><label>目标语言<input name="target_language_code" value="zh-CN" required /></label><label>源语言（可空）<input name="source_language_code" placeholder="en" /></label><label>术语表（可空）<input name="glossary_id" placeholder="product-terms" /></label><button>翻译并下载</button><pre class="result" id="document-result"></pre></form></div>
+    </section>
+
+    <section id="adaptive" class="panel">
+      <div class="section-heading"><div><p class="eyebrow">LIGHTWEIGHT CUSTOMIZATION</p><h2>Adaptive Translation</h2></div><p>用少量领域句对引导 LLM。可在 TranslateText 选择 adaptive LLM，或使用下方 Adaptive MT 数据集接口。</p></div>
+      <div class="split"><form id="dataset-form"><h3>创建 Adaptive MT 数据集</h3><label>数据集 ID（永久资源 ID）<input name="dataset_id" value="support-style" required /></label><label>显示名称<input name="display_name" value="客服文风" required /></label><label>源语言<input name="source_language_code" value="en" required /></label><label>目标语言<input name="target_language_code" value="zh-CN" required /></label><button>创建数据集</button><p class="small">创建后导入 TSV/TMX 示例句对。该操作是同步的。</p></form>
+      <form id="adaptive-form"><h3>以数据集翻译</h3><label>数据集 ID<input name="dataset_id" placeholder="support-style" required /></label><label>原文<textarea name="content" rows="3">The gateway timed out; retry succeeded.</textarea></label><label>源语言 / 目标语言由数据集决定<input value="由数据集决定" disabled /></label><button>自适应翻译</button></form></div><div class="split"><form id="adaptive-inline-form"><h3>以内嵌参考句对翻译</h3><label>原文<textarea name="content" rows="2">The gateway timed out.</textarea></label><label>源语言<input name="source_language_code" value="en" required /></label><label>目标语言<input name="target_language_code" value="zh-CN" required /></label><label>参考句对 JSON<input name="reference_pairs" value='[{"source_sentence":"gateway timeout","target_sentence":"网关超时"}]' required /></label><button>使用参考句对</button></form><form id="adaptive-file-form"><h3>导入 Adaptive MT 文件</h3><label>数据集 ID<input name="dataset_id" placeholder="support-style" required /></label><label>TSV/TMX 的 GCS URI<input name="input_uri" placeholder="gs://bucket/support.tsv" required /></label><button>导入句对</button></form></div><div class="split"><form id="adaptive-files-form"><h3>列出数据集文件</h3><label>数据集 ID<input name="dataset_id" placeholder="support-style" required /></label><button>列出文件与句对数</button><p class="small">删除指定文件的端点已提供：<code>DELETE /api/adaptive/datasets/{dataset}/files/{file}</code>。</p></form><div class="callout"><h3>何时用哪种？</h3><p>内嵌句对随请求发送，最适合即时、少量示例；数据集保留在 Cloud Translation 中，服务会自动选取相似参考句，适合可复用的领域数据。</p></div></div><div class="actions"><button id="list-datasets" type="button" class="secondary">刷新数据集</button></div><pre class="result scroll" id="adaptive-result">自适应翻译、数据集和导入文件结果显示在这里。</pre>
+    </section>
+
+    <section id="extensions" class="panel">
+      <div class="split"><div><div class="section-heading"><div><p class="eyebrow">PREVIEW</p><h2>RomanizeText</h2></div><p>把日文、韩文等非拉丁文字转换为以发音为准的拉丁文字，不等同于翻译。</p></div><form id="romanize-form"><label>原文<textarea name="contents" rows="3">こんにちは世界</textarea></label><label>源语言<input name="source_language_code" value="ja" required /></label><button>罗马化</button></form><pre class="result" id="romanize-result"></pre></div>
+      <div><div class="section-heading"><div><p class="eyebrow">HYBRID TUTORIAL</p><h2>图片 OCR + 翻译</h2></div><p>参考混合术语表教程：Cloud Vision 先提取图片文字，再交给 v3 TranslateText。需要启用 Vision API；如需术语表，请使用文字翻译实验区。</p></div><form id="image-form"><label>图片<input name="file" type="file" accept="image/*" required /></label><label>目标语言<input name="target_language_code" value="zh-CN" required /></label><button>OCR 并翻译</button></form><pre class="result" id="image-result"></pre></div></div>
+      <article class="callout"><h3>AutoML 自定义 NMT 与 Translation LLM</h3><p>在 Google Cloud 中训练 AutoML Translation 模型后，把模型 ID 填入文本翻译的「自定义模型 ID」。模型选择器同时提供 general/nmt、general/translation-llm 与 general/translation-llm-adaptive，便于按质量、延迟和领域适配对比。</p></article>
+    </section>
+  </main>
+  <footer>Cloud Translation API v3 Lab · 请先阅读 <a href="/learning-guide" target="_blank">learning_guide.md</a> 了解权限、配额、区域和成本。</footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>
