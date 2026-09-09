@@ -1,0 +1,12 @@
+{
+  "content": "Please review this PR before lunch.",
+  "source_language_code": "en",
+  "target_language_code": "zh-CN",
+  "reference_pairs": [
+    {"source_sentence": "The PR is ready.", "target_sentence": "该合并请求已就绪。"},
+    {"source_sentence": "I merged the PR.", "target_sentence": "我已合并该合并请求。"},
+    {"source_sentence": "Open a PR for the fix.", "target_sentence": "请为这次修复开一个合并请求。"},
+    {"source_sentence": "This PR needs tests.", "target_sentence": "这个合并请求还缺测试。"},
+    {"source_sentence": "Close the PR.", "target_sentence": "请关闭该合并请求。"}
+  ]
+}

@@ -10,6 +10,7 @@
 - 每次 API 调用可能收费。先用几句话，不要一开始就跑批量任务。
 - 这个 Web Demo 的服务器使用 Google Cloud 凭据；浏览器不保存凭据。若部署到公网，务必额外做登录和访问控制。
 - 如果你只是想翻一句话，做到练习 1 就可以停，不必学习 GCS、术语表和自适应翻译。
+- 术语表、数据集、批量输入的样例在仓库 `assets/` 目录。部署后页面会自动预览；需要放到 GCS 时，请填写**你自己的桶**并用页面一键上传。
 
 ## 练习 0：先把“能不能调用 Google”确认清楚
 
@@ -26,10 +27,10 @@ source .venv/bin/activate
 gcloud auth application-default login
 export GOOGLE_CLOUD_PROJECT="YOUR_PROJECT_ID"
 export TRANSLATION_LOCATION="us-central1"
-uvicorn app:app --reload --port 8000
+uvicorn app:app --reload --port 8010
 ```
 
-打开 <http://127.0.0.1:8000>。
+打开 <http://127.0.0.1:8010>。
 
 ### 每个命令在做什么
 
@@ -129,7 +130,7 @@ Your order will arrive tomorrow.
 
 ### 语言检测
 
-进入“检测与语言”，输入：
+进入“语言检测”，输入：
 
 ```text
 Bonjour tout le monde
@@ -142,7 +143,10 @@ Bonjour tout le monde
 
 ### 支持语言清单
 
-在同一页选 NMT 或 Translation LLM，点“列出支持语言”。这不是单纯的百科清单：不同模型支持的语言可能不同。上线前请先确认你的源语言和目标语言组合可用。
+不同模型支持的语言可能不同，上线前请先确认你的源语言和目标语言组合可用。
+
+- 打开「语言检测」页，点“列出 NMT 支持语言”，Demo 会调用 `GetSupportedLanguages`。
+- Translation LLM **不要**用这个接口查询：Google 会返回 `501 LLM models are not supported`。请打开 [Translation LLM 官方语言表](https://cloud.google.com/translate/docs/languages#translation-llm_supported_languages)。LLM 仍可通过「文本翻译」使用。
 
 ---
 
@@ -152,7 +156,7 @@ Bonjour tout le monde
 
 你希望某些词绝不随模型自由翻译，例如：
 
-- 产品 `Atlas` 必须译为“阿特拉斯”；
+- 产品 `Atlas` 必须译为固定中文（本仓库样例定为「幻月」）；
 - 行业词 `claim` 在保险场景必须译为“理赔申请”；
 - 某品牌名必须保留英文。
 
@@ -163,34 +167,37 @@ GCS（Google Cloud Storage）就是 Google Cloud 的文件存储。地址以 `gs
 例子：
 
 ```text
-gs://my-translation-demo/glossary/terms.csv
+gs://your-bucket/glossary/product-terms.csv
 ```
 
-### 最小的术语文件样例
+请使用**你自己项目**里已经创建的桶。别人的内部测试桶你读不到，这个 Demo 也不会预填任何内部地址。
 
-在电脑上新建 `terms.csv`，内容可以是：
+### 用仓库里的术语表示例
+
+打开「术语表」页。页面会自动加载 `assets/glossary/product-terms.csv`，用表格预览表头和词条。`description` 列只给本地阅读；点「一键上传到我的 GCS」时会被去掉。
+
+1. 在页面填写你的桶名，例如 `your-bucket`。
+2. 点术语表卡片上的「一键上传到我的 GCS」（也可以上传自己的 CSV）。
+3. 创建表单里的输入文件应变成 `gs://your-bucket/glossary/product-terms.csv`。
+4. 术语表 ID 用 `product-terms`，语言代码 `en,zh-CN`，区域 `us-central1`。
+5. 点“创建术语表”。它是后台任务；稍后刷新清单。
+6. 点样例「术语表测试原文」的「填入表单」，回到“文本翻译”，在进阶选项填 `product-terms`，源语言填 `en`。
+
+若你更想自己建文件：表头必须是语言代码，例如：
 
 ```csv
-Atlas,阿特拉斯
+en,zh-CN
+Atlas,幻月
 cloud translation,云翻译
 ```
 
-上传到你已创建的 GCS bucket：
+也可以继续用命令行上传：
 
 ```bash
-gcloud storage cp terms.csv gs://YOUR_BUCKET/glossary/terms.csv
+gcloud storage cp assets/glossary/product-terms.csv gs://YOUR_BUCKET/glossary/product-terms.csv
 ```
 
-然后在“术语表”页填写：
-
-| 字段 | 示例 |
-| --- | --- |
-| 术语表 ID | `product-terms` |
-| 输入文件 | `gs://YOUR_BUCKET/glossary/terms.csv` |
-| 语言代码 | `en,zh-CN` |
-| 区域 | `us-central1` |
-
-点“创建术语表”。它是后台任务，页面会先给 operation 名称；稍后刷新清单。创建成功后，回到“文本翻译”，在“术语表 ID”填 `product-terms`，再翻译含 `Atlas` 的句子。
+命令行上传不会自动去掉 `description` 列；用页面一键上传，或先删掉该列再 `gcloud storage cp`。
 
 ### 三个重要规则
 
@@ -206,8 +213,8 @@ gcloud storage cp terms.csv gs://YOUR_BUCKET/glossary/terms.csv
 
 适合：你现在电脑里的一份小型、无敏感测试 DOCX/PDF/PPTX/XLSX。
 
-1. 打开“批量与文档”。
-2. 在最右侧“TranslateDocument（在线）”选择文件。
+1. 打开“文档翻译”。
+2. 选择一份测试文件。
 3. 目标语言填写 `zh-CN`。
 4. 原文是英文就填 `en`；不知道可以留空。
 5. 点“翻译并下载”。
@@ -216,13 +223,13 @@ gcloud storage cp terms.csv gs://YOUR_BUCKET/glossary/terms.csv
 
 ### B. 批量文本：很多 .txt / .html / .tsv
 
-适合：已有很多文件，且都已经放在 GCS 中。
+适合：已有很多文件，且都已经放在**你自己的** GCS 中。仓库 `assets/batch/messages.txt` 会在「批量翻译」页自动预览，填写桶名后可一键上传。
 
 例子：
 
 ```text
-输入：gs://YOUR_BUCKET/input/messages.txt
-输出：gs://YOUR_BUCKET/output/
+输入：gs://YOUR_BUCKET/batch/messages.txt
+输出：gs://YOUR_BUCKET/batch/out/
 原文：en
 目标：zh-CN,ja
 ```
@@ -261,33 +268,60 @@ gs://YOUR_BUCKET/output/
 如果你的问题只是“产品名翻错”，先用 Glossary。
 如果你的问题是“同一句客服话术需要保持礼貌、简洁、固定称呼”，且你有人工认可的双语例句，再用自适应翻译。
 
+页面上有两条路：**路径 A 先试 5 分钟**（不用 GCS），确认有感觉后再做 **路径 B 数据集**。
+
 ### A. 最小实验：内嵌参考句对
 
-进入“自适应翻译”的“以内嵌参考句对翻译”。保留样例：
+打开“自适应翻译”，左侧卡片已经填好工单（ticket）样例。也可以点“填入工单示例 / 填入 PR 示例”；内容来自仓库 `assets/adaptive/` 里的 JSON，部署后会自动加载。
 
-```json
-[{"source_sentence":"gateway timeout","target_sentence":"网关超时"}]
-```
-
-原文填写：
+默认原文：
 
 ```text
-The gateway timed out.
+Please open a ticket for this outage.
 ```
 
-点“使用参考句对”。参考句不会被长期保存到数据集；它只影响本次请求，适合尝试。
+点“用参考句翻译”。参考句不会存进数据集；只影响这一次请求。
 
-### B. 长期使用：数据集
+### B. 用仓库里的客服文风数据集
 
-当你有许多优质句对时：
+仓库已经拟造了一份英文→中文客服句对：`assets/adaptive/support-style.tsv`。打开「自适应」页即可预览表格。格式要求：
 
-1. 创建数据集，确定源语言和目标语言，例如 `en` → `zh-CN`。
-2. 准备 TSV 或 TMX 双语句对文件并上传到 GCS。
-3. 用“导入 Adaptive MT 文件”导入。
-4. 用“列出数据集文件”确认导入了多少条句对。
-5. 以数据集 ID 发起翻译。
+- 两列，用 **Tab** 分隔（不是逗号）
+- **不要表头**
+- 左列原文、右列人工确认的译文
+- 和术语表 `assets/glossary/product-terms.csv` 对齐了几个词：Helios Console → 赫利俄斯控制台，support specialist → 技术支持老师
 
-官方建议的样例要覆盖你的真实领域词汇、写法和语气。控制台使用至少 5 对，至多 10,000 对；API 上限更高，但绝不是数量越大越好。每对句子最长 512 个字符（两句合计）。
+#### 1. 上传到你自己的 GCS
+
+在页面填写桶名，点数据集卡片上的「一键上传到我的 GCS」。也可以上传自己的 TSV。不要使用别人的内部测试桶。
+
+等价命令行：
+
+```bash
+gcloud storage cp assets/adaptive/support-style.tsv gs://YOUR_BUCKET/adaptive/support-style.tsv
+```
+
+#### 2. 按页面 1–4 步点按钮（不要跳）
+
+| 步骤 | 做什么 | 本样例填什么 |
+| --- | --- | --- |
+| 1 创建空数据集 | 定死语言方向 | ID `support-style`，`en` → `zh-CN` |
+| 2 导入句对 | 把 GCS 文件灌进数据集 | `gs://YOUR_BUCKET/adaptive/support-style.tsv` |
+| 3 确认导入 | 看文件和句对数 | 应看到约 8 条 |
+| 4 用数据集翻译 | 翻**相近但不完全相同**的新句子 | 点测试原文卡片的「填入表单」，或见 `assets/adaptive/test-sentences.txt` |
+
+第 4 步默认原文：
+
+```text
+The gateway timed out; retry succeeded.
+Please retry after a few minutes.
+A support specialist will contact you about the refund.
+Please sign in to Helios Console.
+```
+
+把同一段再拿到“文本翻译”，用 NMT / Translation LLM 各翻一次，对比语气是不是更像客服口径。
+
+官方建议至少 5 对、至多约 10,000 对；每对合计最长 512 字符。数量不是越大越好。导入成功后可以删 GCS 文件；以后要更新语料，需要再上传再导入。
 
 ### 不要这样做
 
@@ -305,18 +339,20 @@ The gateway timed out.
 
 它回答的是“怎么念”，不是“是什么意思”。想知道含义，请用文本翻译。该能力属于 Preview，生产使用前需准备回退方案。
 
-### 图片 OCR + 翻译
+### 图片 / 小型 PDF OCR + 翻译
 
-流程是：图片 → Cloud Vision 识别文字 → Cloud Translation 翻译文字。
+流程是：图片或 PDF → Cloud Vision 识别文字 → Cloud Translation 翻译文字。
 
 因此需要：
 
 1. 启用 Cloud Vision API；
 2. 给调用身份 Vision 权限；
-3. 使用不含私人信息的测试图片；
+3. 使用不含私人信息的测试图片或 PDF；
 4. 先检查 OCR 抄出的文字是否正确，再判断翻译是否正确。
 
 如果 OCR 已经把文字认错，Translation API 无法知道原图内容，应该先处理 OCR 问题。
+
+本 Demo 的 PDF 是 Vision 的同步“文件 OCR”路径：最多处理前 5 页、最大 20MB。需要扫描长 PDF、全量页面或批量 PDF 时，必须把文件放到 GCS，使用 Vision 的异步 `asyncBatchAnnotateFiles`，结果会以 JSON 写回 GCS；这不是即时上传后立即显示结果的功能。反过来，如果 PDF 本身就有可选文字，请优先用“文档翻译”，更适合保留原版式。
 
 ---
 
@@ -354,12 +390,14 @@ The gateway timed out.
 | `Permission denied` / `403` | Cloud Translation API 是否启用；ADC 是否登录；IAM 是否有 user/editor 权限 |
 | `not found` / `404` | Glossary、数据集、模型 ID 和 location 是否匹配 |
 | `gs://` | bucket、对象路径、Storage 读写权限 |
-| `unsupported language` | 在“检测与语言”里对相同模型查支持清单 |
+| `unsupported language` | NMT 在“语言检测”查支持清单；LLM 看 [官方语言表](https://cloud.google.com/translate/docs/languages#translation-llm_supported_languages) |
+| `501` / `LLM models are not supported` | 不要用 `GetSupportedLanguages` 查 Translation LLM；该接口只支持 NMT / AutoML |
 | `invalid argument` | 语言代码、MIME 类型、JSON 格式、文件类型是否正确 |
 
 ## 官方文档索引
 
 - [API 概览](https://docs.cloud.google.com/translate/docs/api-overview?hl=zh-cn) · [模型比较](https://docs.cloud.google.com/translate/docs/advanced/compare-models?hl=zh-cn) · [支持语言](https://docs.cloud.google.com/translate/docs/languages?hl=zh-cn)
+- [GetSupportedLanguages](https://docs.cloud.google.com/translate/docs/reference/rest/v3/projects/getSupportedLanguages) · [Translation LLM](https://docs.cloud.google.com/translate/docs/translation-llm)
 - [支持格式](https://docs.cloud.google.com/translate/docs/supported-formats?hl=zh-cn) · [设置](https://docs.cloud.google.com/translate/docs/setup?hl=zh-cn) · [检测语言](https://docs.cloud.google.com/translate/docs/detect-language?hl=zh-cn&usertype=Advanced) · [列出支持语言](https://docs.cloud.google.com/translate/docs/list-supported-languages?hl=zh-cn&usertype=Advanced)
 - [文本翻译](https://docs.cloud.google.com/translate/docs/translate-text?hl=zh-cn) · [批量翻译](https://docs.cloud.google.com/translate/docs/advanced/batch-translation?hl=zh-cn) · [文档翻译](https://docs.cloud.google.com/translate/docs/advanced/translate-documents?hl=zh-cn)
 - [术语表](https://docs.cloud.google.com/translate/docs/advanced/glossary?hl=zh-cn) · [混合术语表教程](https://docs.cloud.google.com/translate/docs/hybrid-glossaries-tutorial?hl=zh-cn) · [罗马化](https://docs.cloud.google.com/translate/docs/advanced/romanize-text?hl=zh-cn) · [停止词](https://docs.cloud.google.com/translate/docs/advanced/stopwords?hl=zh-cn)

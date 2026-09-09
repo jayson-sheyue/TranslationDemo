@@ -1,0 +1,12 @@
+{
+  "content": "Please open a ticket for this outage.",
+  "source_language_code": "en",
+  "target_language_code": "zh-CN",
+  "reference_pairs": [
+    {"source_sentence": "I opened a ticket yesterday.", "target_sentence": "我昨天建了一张工单。"},
+    {"source_sentence": "The ticket is still open.", "target_sentence": "这张工单仍未关闭。"},
+    {"source_sentence": "Close the ticket after the fix.", "target_sentence": "修复后请关闭工单。"},
+    {"source_sentence": "This ticket has high priority.", "target_sentence": "此工单优先级很高。"},
+    {"source_sentence": "Assign the ticket to on-call.", "target_sentence": "请把工单派给值班人员。"}
+  ]
+}

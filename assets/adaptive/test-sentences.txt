@@ -1,0 +1,4 @@
+The gateway timed out; retry succeeded.
+Please retry after a few minutes.
+A support specialist will contact you about the refund.
+Please sign in to Helios Console.

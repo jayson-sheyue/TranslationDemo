@@ -16,24 +16,24 @@
 | --- | --- | --- | --- |
 | 翻一两句聊天、评论、按钮文案 | 文本翻译 → NMT | 要快、内容短 | 强制产品名译法 |
 | 翻客服邮件、营销内容、较正式文案 | 文本翻译 → Translation LLM | 比 NMT 更重视表达质量 | 没有先做基础质量对比 |
-| 不知道原文是哪种语言 | 检测与语言 | 用户上传/输入的内容来源不确定 | 只有几个字的短句（可能猜错） |
-| 产品名、品牌、行业词必须固定 | 术语表 | `Atlas` 必须总是译成“阿特拉斯” | 想自动修正整段翻译 |
-| 翻一份小 PDF、DOCX、PPTX、XLSX | 批量与文档 → 在线文档 | 想立即下载译文 | 很大或很多份文件 |
-| 翻很多文本/文档文件 | 批量与文档 → 批量 | 文件已在 GCS | 本地电脑上尚未上传的文件 |
-| 让译文接近公司的语气与用词 | 自适应翻译 | 有人工确认的双语好句子 | 没有可靠双语样例 |
-| 看日文/韩文等文字的发音 | 扩展实验 → 罗马化 | 需要读音的拉丁字母写法 | 想知道原文含义（那是翻译） |
-| 翻译图片中的文字 | 扩展实验 → 图片 OCR | 已启用 Cloud Vision API | 图片含私人/机密信息 |
+| 不知道原文是哪种语言 | 语言检测 | 用户上传/输入的内容来源不确定 | 只有几个字的短句（可能猜错） |
+| 产品名、品牌、行业词必须固定 | 术语表（创建）→ 文本翻译（试用） | `Atlas` 必须总是译成固定中文 | 想自动修正整段翻译 |
+| 翻一份小 PDF、DOCX、PPTX、XLSX | 文档翻译 | 想立即下载译文 | 很大或很多份文件 |
+| 翻很多文本/文档文件 | 批量翻译 | 文件已在你自己的 GCS | 还没有自己的桶（可先用页面一键上传样例） |
+| 让译文接近公司的领域说法 | 自适应 | 有人工确认的双语好句子 | 锁死产品名（请用术语表） |
+| 看日文/韩文等文字的发音 | 罗马化 | 需要读音的拉丁字母写法 | 想知道原文含义（那是翻译） |
+| 翻译图片或扫描 PDF 中的文字 | 图片 OCR | 已启用 Cloud Vision API；PDF 仅前 5 页 | 含私人/机密信息 |
 
 ## 这套 Demo 做了什么？
 
-- `TranslateText`：普通文本和 HTML 翻译，可选 NMT、Translation LLM、Adaptive LLM 和自定义 AutoML 模型；
-- `DetectLanguage` 与 `GetSupportedLanguages`：猜测原文语言、检查模型支持什么语言；
+- `TranslateText`：普通文本和 HTML 翻译，可选 NMT、Translation LLM 和自定义 AutoML 模型（自适应不在这一页）；
+- `DetectLanguage` 与 `GetSupportedLanguages`：猜测原文语言、检查 **NMT / AutoML** 支持什么语言（Translation LLM 请看官方语言表，不要调用该接口）；
 - `RomanizeText`：把非拉丁文字写成近似发音的拉丁文字；
 - `TranslateDocument`：上传一份小型 Office/PDF 文档并下载译文；
 - `BatchTranslateText` 与 `BatchTranslateDocument`：对 GCS 中的许多文件发起异步任务；
 - Glossary：从 GCS 导入术语表，保证关键术语一致；
 - Adaptive MT：请求内参考句对、数据集、TSV/TMX 文件导入与管理；
-- 可选图片 OCR：先用 Cloud Vision 识别文字，再交给 Translation API。
+- 可选 OCR：先用 Cloud Vision 识别图片或小型 PDF 中的文字，再交给 Translation API。
 
 ## 在开始前，你需要的四样东西
 
@@ -44,14 +44,14 @@
 3. **启用 Cloud Translation API**：在 Cloud Console 搜索并启用它。
 4. **身份凭据（ADC）**：让这台服务器有权调用 API。浏览器本身不会拿到凭据。
 
-图片实验额外需要 Cloud Vision API。Glossary、批量和自适应数据集还需要 Cloud Storage（GCS）。
+图片 / 小型 PDF OCR 实验额外需要 Cloud Vision API。Glossary、批量和自适应数据集还需要 Cloud Storage（GCS）。
 
 ## 快速开始：复制这些命令
 
 以下命令适用于 macOS / Linux 终端。`YOUR_PROJECT_ID` 必须替换为你自己的 Google Cloud 项目 ID；不要保留尖括号。
 
 ```bash
-cd /Users/apple/Desktop/Demo/TranslationDemo
+cd TranslationDemo   # 换成你克隆下来的项目目录
 
 # 第一次运行时创建 Python 虚拟环境并安装依赖
 python3 -m venv .venv
@@ -66,10 +66,10 @@ export GOOGLE_CLOUD_PROJECT="YOUR_PROJECT_ID"
 export TRANSLATION_LOCATION="us-central1"
 
 # 启动页面
-uvicorn app:app --reload --port 8000
+uvicorn app:app --reload --port 8010
 ```
 
-然后在浏览器打开 <http://127.0.0.1:8000>。
+然后在浏览器打开 <http://127.0.0.1:8010>。
 
 Windows PowerShell 的两行环境变量写法：
 
@@ -119,6 +119,8 @@ $env:TRANSLATION_LOCATION="us-central1"
 
 `general/translation-llm` 适合对语气、可读性、营销文案等更敏感的内容。正确用法是：拿同一段文本分别用 NMT 和 LLM 翻译，请母语读者看效果，再衡量延迟与成本。
 
+**容易误会的限制：** “语言检测”里的 `GetSupportedLanguages` 只能按 NMT 或 AutoML 查询语言，不能查询 Translation LLM。本 Demo 该页已不再提供 LLM 选项。把 `general/translation-llm` 传给该接口会得到 `501 LLM models are not supported`。LLM 应通过「文本翻译」的 `TranslateText` 使用，语言请打开 [Translation LLM 官方语言表](https://cloud.google.com/translate/docs/languages#translation-llm_supported_languages)。
+
 ### Adaptive Translation：你有优质样例时
 
 若你手里已有人工确认的“原文 + 目标译文”句对，可用它引导用词和语气。它不是把差的机器翻译反复喂进去就会变好的训练工具。
@@ -126,6 +128,13 @@ $env:TRANSLATION_LOCATION="us-central1"
 ### AutoML 自定义模型：最后再考虑
 
 这是更重的长期投入，需要准备较多领域数据、训练并维护模型。大多数新项目先用 LLM + Glossary + Adaptive Translation 就够了。
+
+本 Demo **不会启动训练**。需要 AutoML 时，请到 Console 按官方教程做完，再把模型 ID 填回「文本翻译 → 进阶」或「文档翻译」：
+
+- [Translation Console](https://console.cloud.google.com/translation)
+- [用 Console 创建自定义翻译模型（AutoML 教程）](https://cloud.google.com/translate/docs/advanced/custom-translation-quickstart?hl=zh-cn)
+- [创建并管理自定义 TLLM 模型](https://cloud.google.com/translate/docs/advanced/custom-tllm-models?hl=zh-cn)
+- [自定义翻译总览](https://cloud.google.com/translate/docs/advanced/custom-translations?hl=zh-cn)
 
 ## 功能的具体使用提醒
 
@@ -142,18 +151,40 @@ $env:TRANSLATION_LOCATION="us-central1"
 
 术语表的资源区域必须与翻译请求兼容。新手不知道用什么时，先统一使用 `us-central1`。
 
+仓库 `assets/glossary/` 里有可预览的产品术语表示例和测试原文。部署到本地后，「术语表」页会自动加载文件内容。创建术语表前，先填写**你自己项目**里的 GCS 桶名，用页面「一键上传」或上传自己的 CSV；不要填写别人的内部测试桶。CSV 里的 `description` 列只给本地预览看，上传时会自动去掉。
+
 ### 文档与批量
 
 - 上传一份小文档，使用在线文档翻译；Demo 将返回可下载的文件。
-- 要处理一批文件，使用 Batch；输入、输出都必须是 `gs://` 地址。
+- 要处理一批文件，使用 Batch；输入、输出都必须是你自己的 `gs://` 地址。仓库 `assets/batch/messages.txt` 可在「批量翻译」页预览并一键上传。
 - Batch 返回的是 operation 名称，不是最终文件。你需要稍后在 Cloud Console 的 Operations 和 GCS 输出目录查看结果。
 - 批量文本输入支持 `.txt`、`.html`、`.tsv`，需 UTF-8；一次最多 100 文件、最多 10 个目标语言，总量最多 100M Unicode code points。
 
+### 图片与 PDF OCR
+
+- 图片 / 小 PDF OCR 是一个组合功能：**Cloud Vision 读字，再由 Cloud Translation 翻译**。它不是 Translation API 自身的功能。打开页面或做普通文本翻译时不会调用 Vision。
+- Demo 可直接上传图片或 PDF；PDF 使用 Vision 的同步文件 OCR，**最多处理前 5 页、最大 20MB**。扫描件超过 5 页或要处理全部页面，请使用 Vision 的 GCS 异步 OCR。
+- 对本来就有可选中文字的 PDF，优先使用“在线文档翻译”，通常更能保留段落、表格和版式。
+
 ### 自适应翻译
 
-- **临时测试**：在页面填内嵌参考句对。它们只用于这一次请求。
-- **长期复用**：创建数据集，再从 GCS 导入 TSV/TMX 双语句对。
-- 请使用人工确认的双语样例；不相关、低质量或自相矛盾的样例会降低效果。
+- **临时测试（路径 A）**：在页面填内嵌参考句对。它们只用于这一次请求，不需要 GCS。
+- **长期复用（路径 B）**：仓库 `assets/adaptive/support-style.tsv`（Tab 分隔、无表头）会在「自适应」页自动预览。填写你自己的桶名后一键上传，再按 创建 → 导入 → 确认句对数 → 翻译 操作。测试原文见同目录 `test-sentences.txt`。
+- 请使用人工确认的双语样例；不相关、低质量或自相矛盾的样例会降低效果。这是 Adaptive MT（`adaptiveMtTranslate`），和文本翻译里的 `general/translation-llm-adaptive` 不是同一条接口。
+
+### 本地样例与你自己的 GCS 桶
+
+术语表、自适应数据集、批量翻译的输入文件必须在 **你自己项目** 的 Cloud Storage 里。仓库不会、也不应该写死某个内部测试桶。
+
+部署到本地后，相关分页会自动加载 `assets/` 里的文件，可直接预览表格或原文。需要上传时：
+
+1. 在页面填写你自己的桶名（不含 `gs://`，浏览器会记住）；
+2. 点「一键上传到我的 GCS」，或选择自己的文件上传；
+3. 成功后的 `gs://your-bucket/...` 会回填到创建/导入表单。
+
+术语表示例 CSV 多了一列 `description`，只方便本地看懂每一行；上传时服务会自动去掉这一列，避免 Google 把它当成第三种语言。
+
+一键上传需要当前 ADC 对该桶有 `roles/storage.objectCreator`（或等价写对象权限）。
 
 ## 权限：最小权限原则
 
@@ -162,7 +193,7 @@ $env:TRANSLATION_LOCATION="us-central1"
 - 在线翻译、检测、语言清单、罗马化、在线文档：`roles/cloudtranslate.user`。
 - 创建/删除 Glossary：`roles/cloudtranslate.editor`。
 - 读取批量输入、Glossary 文件和自适应数据文件：按所需 bucket 配 `roles/storage.objectViewer`。
-- 写批量输出：按所需 bucket 配 `roles/storage.objectCreator`。
+- 写批量输出、以及页面上的「一键上传到我的 GCS」：按所需 bucket 配 `roles/storage.objectCreator`。
 
 部署到 Cloud Run、GKE、Compute Engine 时，优先使用工作负载绑定的服务账号，不要把长期服务账号 JSON 放入仓库、前端、镜像或聊天记录。
 
@@ -184,6 +215,7 @@ $env:TRANSLATION_LOCATION="us-central1"
 | `gs://...` 相关错误 | 文件没上传 GCS，或服务账号无法读写 bucket | 确认路径、对象存在和 Storage IAM |
 | 批量任务没有文件 | 任务仍在运行，或看的不是输出前缀 | 用 operation 名称到 Operations 查看；打开指定输出目录 |
 | 译文不符合产品用词 | 只靠默认模型无法保证专有词 | 创建并测试 Glossary；再考虑自适应样例 |
+| `501 LLM models are not supported` | 把 Translation LLM 传给了 `GetSupportedLanguages` | 不要用该接口查 LLM；打开 [官方语言表](https://cloud.google.com/translate/docs/languages#translation-llm_supported_languages)。LLM 仍可用于文本翻译 |
 | 页面能打开、按钮却失败 | 服务端没有 ADC 或项目配置 | 看终端错误，并重新做“快速开始” |
 
 ## 开发与验证
@@ -195,18 +227,22 @@ python3 -m py_compile app.py
 node --check static/app.js
 ```
 
-启动后，可打开 `http://127.0.0.1:8000/api/health` 查看项目配置。完整的练习步骤、GCS 样例和场景化决策，请继续看 [learning_guide.md](learning_guide.md)。
+启动后，可打开 `http://127.0.0.1:8010/api/health` 查看项目配置。完整的练习步骤、GCS 样例和场景化决策，请继续看 [learning_guide.md](learning_guide.md)。
 
 ## 项目结构
 
 ```text
 app.py                 FastAPI 路由与 Google v3 客户端调用
+assets/glossary/       术语表示例 CSV 与测试原文（页面自动预览）
+assets/adaptive/       客服数据集 TSV、测试句、内嵌句对 JSON
+assets/text/           HTML 翻译样例
+assets/batch/          批量文本样例
 static/index.html      中文网页与新手引导
-static/app.js          表单、场景跳转、结果与下载逻辑
+static/app.js          表单、样例加载、一键上传与结果逻辑
 static/styles.css      响应式样式
 learning_guide.md      从第一次翻译到高级能力的练习手册
 .env.example           不含密钥的环境变量示例
-requirements.txt       Python 依赖
+requirements.txt       Python 依赖（含一键上传所需的 google-cloud-storage）
 ```
 
 ## 官方文档
@@ -214,6 +250,7 @@ requirements.txt       Python 依赖
 - [API 概览](https://docs.cloud.google.com/translate/docs/api-overview?hl=zh-cn) · [模型比较](https://docs.cloud.google.com/translate/docs/advanced/compare-models?hl=zh-cn)
 - [支持语言](https://docs.cloud.google.com/translate/docs/languages?hl=zh-cn) · [支持格式](https://docs.cloud.google.com/translate/docs/supported-formats?hl=zh-cn) · [设置](https://docs.cloud.google.com/translate/docs/setup?hl=zh-cn)
 - [文本翻译](https://docs.cloud.google.com/translate/docs/translate-text?hl=zh-cn) · [检测语言](https://docs.cloud.google.com/translate/docs/detect-language?hl=zh-cn&usertype=Advanced) · [列出支持语言](https://docs.cloud.google.com/translate/docs/list-supported-languages?hl=zh-cn&usertype=Advanced)
+- [GetSupportedLanguages](https://docs.cloud.google.com/translate/docs/reference/rest/v3/projects/getSupportedLanguages) · [Translation LLM](https://docs.cloud.google.com/translate/docs/translation-llm)
 - [批量翻译](https://docs.cloud.google.com/translate/docs/advanced/batch-translation?hl=zh-cn) · [文档翻译](https://docs.cloud.google.com/translate/docs/advanced/translate-documents?hl=zh-cn) · [术语表](https://docs.cloud.google.com/translate/docs/advanced/glossary?hl=zh-cn)
 - [罗马化](https://docs.cloud.google.com/translate/docs/advanced/romanize-text?hl=zh-cn) · [停止词](https://docs.cloud.google.com/translate/docs/advanced/stopwords?hl=zh-cn) · [混合术语表教程](https://docs.cloud.google.com/translate/docs/hybrid-glossaries-tutorial?hl=zh-cn)
 - [自适应翻译](https://docs.cloud.google.com/translate/docs/advanced/adaptive-translation?hl=zh-cn) · [自定义翻译](https://docs.cloud.google.com/translate/docs/advanced/custom-translations?hl=zh-cn) · [管理自适应数据](https://docs.cloud.google.com/translate/docs/advanced/adaptive-translation-data?hl=zh-cn)

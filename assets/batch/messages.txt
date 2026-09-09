@@ -1,0 +1,3 @@
+Hello, Cloud Translation API!
+Please retry after a gateway timeout.
+A support specialist will contact you.
