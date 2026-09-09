@@ -35,10 +35,16 @@ function bindJsonForm(selector, url, result, build) {
   });
 }
 
-document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => {
+function openPanel(panelId) {
   document.querySelectorAll(".tab,.panel").forEach((el) => el.classList.remove("active"));
-  tab.classList.add("active"); $(`#${tab.dataset.panel}`).classList.add("active");
-}));
+  $(`.tab[data-panel="${panelId}"]`).classList.add("active");
+  $(`#${panelId}`).classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => openPanel(tab.dataset.panel)));
+document.querySelectorAll("[data-go]").forEach((button) => button.addEventListener("click", () => openPanel(button.dataset.go)));
+document.querySelectorAll("[data-scroll]").forEach((button) => button.addEventListener("click", () => $("#" + button.dataset.scroll).scrollIntoView({ behavior: "smooth" })));
 
 bindJsonForm("#translate-form", "/api/translate", "#translate-result", (form) => {
   const p = payload(form, ["source_language_code", "target_language_code", "mime_type", "model", "custom_model_id", "glossary_id", "location"]);

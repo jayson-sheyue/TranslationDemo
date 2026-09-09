@@ -8,17 +8,45 @@
 </head>
 <body>
   <header class="hero">
-    <div><p class="eyebrow">GOOGLE CLOUD · ADVANCED API</p><h1>Translation API v3 Lab</h1><p class="lede">从一次文本翻译，到术语表、异步批量任务、文档与自适应翻译的可运行演示。</p></div>
+    <div><p class="eyebrow">GOOGLE CLOUD · ADVANCED API</p><h1>Translation API v3 Lab</h1><p class="lede">不用先懂 API：先完成一次短句翻译，再按工作场景选择术语表、文档、批量或自适应翻译。</p></div>
     <div class="health" id="health">正在检查服务配置…</div>
   </header>
   <div class="notice"><strong>服务端凭据：</strong>浏览器不会接触 Google 凭据。请先在服务器设置 <code>GOOGLE_CLOUD_PROJECT</code> 和 ADC。<a href="https://github.com/jayson-sheyue/TranslationDemo/blob/main/README.md" target="_blank" rel="noreferrer">查看 README</a></div>
   <main>
     <nav class="tabs" aria-label="功能导航">
-      <button class="tab active" data-panel="text">文本翻译</button><button class="tab" data-panel="languages">检测与语言</button><button class="tab" data-panel="glossary">术语表</button><button class="tab" data-panel="batch">批量与文档</button><button class="tab" data-panel="adaptive">自适应翻译</button><button class="tab" data-panel="extensions">扩展实验</button>
+      <button class="tab active" data-panel="guide">从这里开始</button><button class="tab" data-panel="text">文本翻译</button><button class="tab" data-panel="languages">检测与语言</button><button class="tab" data-panel="glossary">术语表</button><button class="tab" data-panel="batch">批量与文档</button><button class="tab" data-panel="adaptive">自适应翻译</button><button class="tab" data-panel="extensions">扩展实验</button>
     </nav>
 
-    <section id="text" class="panel active">
+    <section id="guide" class="panel active">
+      <div class="section-heading"><div><p class="eyebrow">NO JARGON START</p><h2>不知道从哪开始？照这页做。</h2></div><p>不用先理解 API、IAM、模型或 Cloud Storage。先完成下面的前三步，就能做第一次真实翻译。</p></div>
+      <div class="onboarding">
+        <article class="step-card"><span>1</span><h3>确认右上角状态</h3><p>看到“已配置项目”才可以翻译。若显示“等待配置”，打开 README，复制“快速开始”中的命令逐条执行。</p><a href="https://github.com/jayson-sheyue/TranslationDemo/blob/main/README.md#快速开始" target="_blank" rel="noreferrer">我看不到已配置项目，怎么办？</a></article>
+        <article class="step-card"><span>2</span><h3>先翻一句无敏感文字</h3><p>点击“文本翻译”，保持默认内容和默认模型，点击“翻译”。第一次不要填术语表、模型 ID 或区域。</p><button type="button" class="link-button" data-go="text">去做第一次翻译</button></article>
+        <article class="step-card"><span>3</span><h3>结果出现后再选功能</h3><p>下面的卡片按“你想做什么”分类。标有“需要 GCS”的项目可以等基础翻译成功后再学习。</p><button type="button" class="link-button" data-scroll="choose">选择我的场景</button></article>
+      </div>
+
+      <div id="choose" class="guide-heading"><p class="eyebrow">CHOOSE BY JOB, NOT BY API NAME</p><h3>你想完成什么？</h3><p>点一张卡片，会带你到最合适的实验区。</p></div>
+      <div class="scenario-grid">
+        <button class="scenario" data-go="text"><b>聊天、评论、短句</b><span>希望马上看到译文</span><em>用：NMT 文本翻译</em></button>
+        <button class="scenario" data-go="text"><b>客服邮件、营销文案</b><span>更在意自然与质量</span><em>用：Translation LLM</em></button>
+        <button class="scenario" data-go="languages"><b>不知道原文是什么语言</b><span>来源多、语言混杂</span><em>用：语言检测</em></button>
+        <button class="scenario" data-go="glossary"><b>产品名必须固定</b><span>例如 Atlas 永远译成“阿特拉斯”</span><em>用：术语表（需要 GCS）</em></button>
+        <button class="scenario" data-go="batch"><b>翻译一份小 PDF / DOCX</b><span>希望保留原有排版</span><em>用：在线文档翻译</em></button>
+        <button class="scenario" data-go="batch"><b>一次翻很多文件</b><span>网站导出、商品资料、内容库</span><em>用：批量翻译（需要 GCS）</em></button>
+        <button class="scenario" data-go="adaptive"><b>想模仿公司的说话方式</b><span>已有人工确认的双语好句子</span><em>用：自适应翻译</em></button>
+        <button class="scenario" data-go="extensions"><b>读出日文发音或翻图片文字</b><span>这不是普通的文字翻译</span><em>用：罗马化或 OCR 扩展</em></button>
+      </div>
+
+      <div class="split guide-bottom">
+        <article class="callout"><h3>最安全的学习顺序</h3><ol><li>文本翻译（无敏感短句）</li><li>检测语言和支持语言</li><li>罗马化</li><li>在线文档翻译（小测试文件）</li><li>术语表、批量、自适应翻译</li></ol><p>最后三项会用到 GCS：可以把它理解为 Google Cloud 的网盘。完全不会也没关系，学习指南有单独教程。</p></article>
+        <article class="warning-card"><h3>三件最容易踩坑的事</h3><ul><li><b>不是所有模型支持所有语言。</b>先在“检测与语言”查清楚。</li><li><b>术语表和数据集有区域。</b>不确定时先使用 <code>us-central1</code>。</li><li><b>批量任务不会立即完成。</b>它会返回任务编号，稍后到 GCS 输出目录找结果。</li></ul></article>
+      </div>
+      <p class="help-footer">需要逐步、带输入样例的教程？打开 <a href="https://github.com/jayson-sheyue/TranslationDemo/blob/main/learning_guide.md" target="_blank" rel="noreferrer">learning_guide.md</a>。</p>
+    </section>
+
+    <section id="text" class="panel">
       <div class="section-heading"><div><p class="eyebrow">SYNCHRONOUS</p><h2>TranslateText</h2></div><p>支持纯文本 / HTML、自动检测源语言、NMT、Translation LLM、Adaptive LLM、AutoML 自定义模型、术语表与标签。</p></div>
+      <article class="howto"><h3>第一次怎么做（20 秒）</h3><ol><li>“待翻译内容”输入一句无敏感测试文字；每一行会单独翻译。</li><li>源语言不知道就留空；目标语言先保留 <code>zh-CN</code>。</li><li>模型先选 <b>general/nmt</b>，点“翻译”。</li></ol><p><b>什么时候换模型？</b>聊天、按钮、短内容选 NMT；正式文案、客服回复、重质量内容再试 Translation LLM。用同一句话对比后决定，不要盲目选择更贵模型。</p></article>
       <form id="translate-form" class="grid-form">
         <label class="wide">待翻译内容（每行作为一个 <code>contents</code> 项）<textarea name="contents" rows="7">Hello, Cloud Translation API!
 Our product name is Atlas.</textarea></label>
@@ -37,6 +65,7 @@ Our product name is Atlas.</textarea></label>
 
     <section id="languages" class="panel">
       <div class="split"><div><div class="section-heading"><div><p class="eyebrow">DISCOVER</p><h2>DetectLanguage</h2></div></div>
+        <article class="howto compact"><p><b>先检测、后翻译：</b>适用于你真的不知道原文语言的情况。短句容易猜错；若你知道原文是英文，在文本翻译直接填写 <code>en</code> 会更可靠。</p></article>
         <form id="detect-form"><label>输入文字<textarea name="content" rows="5">Bonjour tout le monde</textarea></label><label>MIME 类型<select name="mime_type"><option>text/plain</option><option>text/html</option></select></label><button>检测语言</button></form><pre class="result" id="detect-result">置信度与候选语言会显示在这里。</pre></div>
         <div><div class="section-heading"><div><p class="eyebrow">CATALOG</p><h2>GetSupportedLanguages</h2></div></div>
         <form id="languages-form"><label>显示语言<input name="display_language_code" value="zh-CN" /></label><label>模型<select name="model"><option value="general/nmt">general/nmt</option><option value="general/translation-llm">general/translation-llm</option></select></label><button>列出支持语言</button></form><pre class="result scroll" id="languages-result">按所选模型列出语言与方向支持情况。</pre></div></div>
@@ -44,11 +73,13 @@ Our product name is Atlas.</textarea></label>
 
     <section id="glossary" class="panel">
       <div class="section-heading"><div><p class="eyebrow">DOMAIN CONTROL</p><h2>Glossary</h2></div><p>术语表来自 Cloud Storage 的 CSV/TSV/TMX；创建和删除均为长时间运行任务。翻译时在「文本翻译」填入术语表 ID。</p></div>
+      <article class="howto"><h3>术语表适合什么、不适合什么？</h3><p><b>适合：</b>产品名、品牌、岗位名、行业专有词，例如让 <code>Atlas</code> 始终译为“阿特拉斯”。<br/><b>不适合：</b>想“自动改好整段翻译”。它不是通用纠错工具。</p><ol><li>先在 GCS 上传 CSV、TSV 或 TMX 文件，例如一行 <code>Atlas,阿特拉斯</code>。</li><li>把文件地址填入下方，例如 <code>gs://my-bucket/terms.csv</code>。</li><li>创建成功后，在“文本翻译”填写同一个术语表 ID。</li></ol><p>没有 GCS？先跳过本页，基础翻译完全不受影响。</p></article>
       <div class="split"><form id="glossary-form"><label>术语表 ID<input name="glossary_id" value="product-terms" required /></label><label>输入文件（GCS）<input name="input_uri" placeholder="gs://bucket/glossary.csv" required /></label><label>语言代码（逗号分隔）<input name="language_codes" value="en,zh-CN" required /></label><label>位置<input name="location" value="us-central1" /></label><button>创建术语表</button></form><div><div class="actions"><button id="list-glossaries" type="button">刷新术语表</button></div><pre class="result scroll" id="glossary-result">术语表清单将显示在这里。</pre><p class="small">停止词提示：单独的 <code>the</code>、<code>and</code> 等无效搜索字词会被 Glossary 忽略。</p></div></div><form id="stopword-form" class="inline-form"><label>停止词预检（逗号分隔）<input name="terms" value="Atlas,the,terms and conditions,and" /></label><button>检查通用停止词</button></form><pre class="result" id="stopword-result">这是本地预检；完整的语言专属列表以官方文档为准。</pre>
     </section>
 
     <section id="batch" class="panel">
       <div class="section-heading"><div><p class="eyebrow">ASYNC + FILES</p><h2>批量文本与文档</h2></div><p>所有输入输出都在 Cloud Storage。批量文本最多 100 个文件、10 个目标语言；在线文档翻译直接返回二进制输出。</p></div>
+      <article class="howto"><h3>先选对方式，避免白忙</h3><p><b>在线文档翻译：</b>翻译你电脑里的一份小测试 PDF、DOCX、PPTX 或 XLSX，适合现在就要下载结果。<br/><b>批量翻译：</b>翻译很多文件；输入和输出都必须在 GCS。提交后只返回任务编号，稍后到 GCS 输出目录找文件。没有 GCS 就先用在线文档。</p></article>
       <div class="triple"><form id="batch-text-form"><h3>BatchTranslateText</h3><label>输入 GCS URI<input name="input_uri" placeholder="gs://bucket/in.txt" required /></label><label>输出 GCS 前缀<input name="output_uri_prefix" placeholder="gs://bucket/out/" required /></label><label>源语言<input name="source_language_code" value="en" required /></label><label>目标语言（逗号）<input name="target_language_codes" value="zh-CN,ja" required /></label><label>MIME<select name="mime_type"><option>text/plain</option><option>text/html</option></select></label><button>提交文本任务</button><pre class="result" id="batch-text-result"></pre></form>
       <form id="batch-document-form"><h3>BatchTranslateDocument</h3><label>输入 GCS URI / 通配符<input name="input_uri" placeholder="gs://bucket/input/*.docx" required /></label><label>输出 GCS 前缀<input name="output_uri_prefix" placeholder="gs://bucket/out/" required /></label><label>源语言（可空）<input name="source_language_code" placeholder="en" /></label><label>目标语言（逗号）<input name="target_language_codes" value="zh-CN" required /></label><button>提交文档任务</button><pre class="result" id="batch-document-result"></pre></form>
       <form id="document-form"><h3>TranslateDocument（在线）</h3><label>文档<input name="file" type="file" accept=".doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx" required /></label><label>目标语言<input name="target_language_code" value="zh-CN" required /></label><label>源语言（可空）<input name="source_language_code" placeholder="en" /></label><label>术语表（可空）<input name="glossary_id" placeholder="product-terms" /></label><button>翻译并下载</button><pre class="result" id="document-result"></pre></form></div>
@@ -56,6 +87,7 @@ Our product name is Atlas.</textarea></label>
 
     <section id="adaptive" class="panel">
       <div class="section-heading"><div><p class="eyebrow">LIGHTWEIGHT CUSTOMIZATION</p><h2>Adaptive Translation</h2></div><p>用少量领域句对引导 LLM。可在 TranslateText 选择 adaptive LLM，或使用下方 Adaptive MT 数据集接口。</p></div>
+      <article class="howto"><h3>只有在你有“人工确认的双语好句子”时才用它</h3><p><b>内嵌参考句对：</b>把 1～几条好例句连同本次请求发送，适合临时试验。<br/><b>数据集：</b>把很多 TSV/TMX 对照句保存下来，反复用于固定业务，例如客服语气。</p><p>没有可靠的双语样例？先试 Translation LLM 或术语表。把机器翻译结果再作为样例，通常不会提升质量。</p></article>
       <div class="split"><form id="dataset-form"><h3>创建 Adaptive MT 数据集</h3><label>数据集 ID（永久资源 ID）<input name="dataset_id" value="support-style" required /></label><label>显示名称<input name="display_name" value="客服文风" required /></label><label>源语言<input name="source_language_code" value="en" required /></label><label>目标语言<input name="target_language_code" value="zh-CN" required /></label><button>创建数据集</button><p class="small">创建后导入 TSV/TMX 示例句对。该操作是同步的。</p></form>
       <form id="adaptive-form"><h3>以数据集翻译</h3><label>数据集 ID<input name="dataset_id" placeholder="support-style" required /></label><label>原文<textarea name="content" rows="3">The gateway timed out; retry succeeded.</textarea></label><label>源语言 / 目标语言由数据集决定<input value="由数据集决定" disabled /></label><button>自适应翻译</button></form></div><div class="split"><form id="adaptive-inline-form"><h3>以内嵌参考句对翻译</h3><label>原文<textarea name="content" rows="2">The gateway timed out.</textarea></label><label>源语言<input name="source_language_code" value="en" required /></label><label>目标语言<input name="target_language_code" value="zh-CN" required /></label><label>参考句对 JSON<input name="reference_pairs" value='[{"source_sentence":"gateway timeout","target_sentence":"网关超时"}]' required /></label><button>使用参考句对</button></form><form id="adaptive-file-form"><h3>导入 Adaptive MT 文件</h3><label>数据集 ID<input name="dataset_id" placeholder="support-style" required /></label><label>TSV/TMX 的 GCS URI<input name="input_uri" placeholder="gs://bucket/support.tsv" required /></label><button>导入句对</button></form></div><div class="split"><form id="adaptive-files-form"><h3>列出数据集文件</h3><label>数据集 ID<input name="dataset_id" placeholder="support-style" required /></label><button>列出文件与句对数</button><p class="small">删除指定文件的端点已提供：<code>DELETE /api/adaptive/datasets/{dataset}/files/{file}</code>。</p></form><div class="callout"><h3>何时用哪种？</h3><p>内嵌句对随请求发送，最适合即时、少量示例；数据集保留在 Cloud Translation 中，服务会自动选取相似参考句，适合可复用的领域数据。</p></div></div><div class="actions"><button id="list-datasets" type="button" class="secondary">刷新数据集</button></div><pre class="result scroll" id="adaptive-result">自适应翻译、数据集和导入文件结果显示在这里。</pre>
     </section>
